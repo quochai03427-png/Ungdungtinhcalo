@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GymBro Calorie Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .hero-title {
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        /* Background with David Laid and Cbum */
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+        }
+
+        .bg-overlay::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800&q=80');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.08;
+            filter: grayscale(100%);
+        }
+
+        .bg-overlay::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.08;
+            filter: grayscale(100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-style {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .input-style:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, rgba(75, 85, 99, 0.3) 0%, rgba(55, 65, 81, 0.3) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .activity-btn {
+            transition: all 0.3s ease;
+        }
+
+        .activity-btn.active {
+            background: rgba(107, 114, 128, 0.5);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .goal-btn.active {
+            background: rgba(107, 114, 128, 0.5);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .macro-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .macro-fill {
+            height: 100%;
+            transition: width 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .quote-text {
+            font-style: italic;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+    <div class="bg-overlay"></div>
+    
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-10 animate-in">
+            <h1 class="hero-title text-5xl md:text-7xl tracking-wider text-white mb-2">GYMBRO CALORIES</h1>
+            <p class="text-gray-400 text-lg">Tính toán calo & macro cho nam tập gym</p>
+            <p class="quote-text text-sm mt-3 text-gray-500">"The only bad workout is the one that didn't happen" - Unknown</p>
+        </header>
+
+        <!-- Main Calculator -->
+        <div class="glass-card rounded-3xl p-6 md:p-10 mb-8 animate-in" style="animation-delay: 0.2s;">
+            <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                <span class="text-3xl">💪</span>
+                Thông tin cơ bản
+            </h2>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div>
+                    <label class="block text-gray-400 mb-2 text-sm font-medium">Tuổi</label>
+                    <input type="number" id="age" placeholder="25" 
+                        class="input-style w-full px-4 py-3 rounded-xl text-white text-lg">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2 text-sm font-medium">Cân nặng (kg)</label>
+                    <input type="number" id="weight" placeholder="75" 
+                        class="input-style w-full px-4 py-3 rounded-xl text-white text-lg">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2 text-sm font-medium">Chiều cao (cm)</label>
+                    <input type="number" id="height" placeholder="175" 
+                        class="input-style w-full px-4 py-3 rounded-xl text-white text-lg">
+                </div>
+            </div>
+
+            <!-- Body Fat (Optional) -->
+            <div class="mb-8">
+                <label class="block text-gray-400 mb-2 text-sm font-medium">
+                    % Mỡ cơ thể (tùy chọn - để tính chính xác hơn)
+                </label>
+                <input type="number" id="bodyfat" placeholder="15" 
+                    class="input-style w-full md:w-1/3 px-4 py-3 rounded-xl text-white text-lg">
+            </div>
+
+            <!-- Activity Level -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span>🏋️</span>
+                    Mức độ hoạt động
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <button class="activity-btn glass-card px-4 py-4 rounded-xl text-center hover:bg-white/10 border border-white/10" data-multiplier="1.2">
+                        <div class="text-2xl mb-2">🪑</div>
+                        <div class="font-medium text-sm">Ít vận động</div>
+                        <div class="text-xs text-gray-500">Ngồi văn phòng</div>
+                    </button>
+                    <button class="activity-btn glass-card px-4 py-4 rounded-xl text-center hover:bg-white/10 border border-white/10" data-multiplier="1.375">
+                        <div class="text-2xl mb-2">🚶</div>
+                        <div class="font-medium text-sm">Nhẹ</div>
+                        <div class="text-xs text-gray-500">1-2 buổi/tuần</div>
+                    </button>
+                    <button class="activity-btn glass-card px-4 py-4 rounded-xl text-center hover:bg-white/10 border border-white/10 active" data-multiplier="1.55">
+                        <div class="text-2xl mb-2">🏃</div>
+                        <div class="font-medium text-sm">Trung bình</div>
+                        <div class="text-xs text-gray-500">3-5 buổi/tuần</div>
+                    </button>
+                    <button class="activity-btn glass-card px-4 py-4 rounded-xl text-center hover:bg-white/10 border border-white/10" data-multiplier="1.725">
+                        <div class="text-2xl mb-2">💪</div>
+                        <div class="font-medium text-sm">Nặng</div>
+                        <div class="text-xs text-gray-500">6-7 buổi/tuần</div>
+                    </button>
+                    <button class="activity-btn glass-card px-4 py-4 rounded-xl text-center hover:bg-white/10 border border-white/10" data-multiplier="1.9">
+                        <div class="text-2xl mb-2">🔥</div>
+                        <div class="font-medium text-sm">Rất nặng</div>
+                        <div class="text-xs text-gray-500">2 buổi/ngày</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Goal -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span>🎯</span>
+                    Mục tiêu
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button class="goal-btn glass-card px-6 py-5 rounded-xl text-center hover:bg-white/10 border border-white/10" data-goal="cut">
+                        <div class="text-3xl mb-2">🔻</div>
+                        <div class="font-semibold text-lg">Giảm mỡ</div>
+                        <div class="text-sm text-gray-400">-500 calo/ngày</div>
+                    </button>
+                    <button class="goal-btn glass-card px-6 py-5 rounded-xl text-center hover:bg-white/10 border border-white/10 active" data-goal="maintain">
+                        <div class="text-3xl mb-2">⚖️</div>
+                        <div class="font-semibold text-lg">Duy trì</div>
+                        <div class="text-sm text-gray-400">Giữ nguyên</div>
+                    </button>
+                    <button class="goal-btn glass-card px-6 py-5 rounded-xl text-center hover:bg-white/10 border border-white/10" data-goal="bulk">
+                        <div class="text-3xl mb-2">🔺</div>
+                        <div class="font-semibold text-lg">Tăng cơ</div>
+                        <div class="text-sm text-gray-400">+300-500 calo/ngày</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calculate Button -->
+            <button id="calculateBtn" class="btn-primary w-full py-4 rounded-xl text-xl font-semibold text-white">
+                TÍNH TOÁN 🧮
+            </button>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden">
+            <div class="glass-card rounded-3xl p-6 md:p-10 mb-8 animate-in">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                    <span class="text-3xl">📊</span>
+                    Kết quả của bạn
+                </h2>
+
+                <!-- Main Stats -->
+                <div class="grid md:grid-cols-3 gap-6 mb-8">
+                    <div class="result-card rounded-2xl p-6 text-center">
+                        <div class="text-gray-400 text-sm mb-1">BMR (Tỷ lệ trao đổi chất)</div>
+                        <div id="bmrResult" class="text-4xl font-bold text-white">0</div>
+                        <div class="text-gray-500 text-sm">calo/ngày</div>
+                    </div>
+                    <div class="result-card rounded-2xl p-6 text-center">
+                        <div class="text-gray-400 text-sm mb-1">TDEE (Năng lượng tiêu thụ)</div>
+                        <div id="tdeeResult" class="text-4xl font-bold text-white">0</div>
+                        <div class="text-gray-500 text-sm">calo/ngày</div>
+                    </div>
+                    <div class="result-card rounded-2xl p-6 text-center bg-gradient-to-br from-gray-600/40 to-gray-700/40">
+                        <div class="text-gray-300 text-sm mb-1">Mục tiêu calo</div>
+                        <div id="targetResult" class="text-5xl font-bold text-white">0</div>
+                        <div class="text-gray-400 text-sm">calo/ngày</div>
+                    </div>
+                </div>
+
+                <!-- Macros -->
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <span>🥗</span>
+                    Phân chia Macro (Dành cho Gymer)
+                </h3>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-6">
+                    <!-- Protein -->
+                    <div class="result-card rounded-2xl p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-lg font-medium">🥩 Protein</span>
+                            <span id="proteinGrams" class="text-2xl font-bold">0g</span>
+                        </div>
+                        <div class="macro-bar">
+                            <div class="macro-fill bg-red-400" id="proteinBar" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-sm text-gray-400">
+                            <span id="proteinCal">0 calo</span>
+                            <span id="proteinPercent">0%</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">2.2g/kg cân nặng</div>
+                    </div>
+
+                    <!-- Carbs -->
+                    <div class="result-card rounded-2xl p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-lg font-medium">🍚 Carbs</span>
+                            <span id="carbsGrams" class="text-2xl font-bold">0g</span>
+                        </div>
+                        <div class="macro-bar">
+                            <div class="macro-fill bg-yellow-400" id="carbsBar" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-sm text-gray-400">
+                            <span id="carbsCal">0 calo</span>
+                            <span id="carbsPercent">0%</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">Năng lượng cho tập luyện</div>
+                    </div>
+
+                    <!-- Fat -->
+                    <div class="result-card rounded-2xl p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-lg font-medium">🥑 Chất béo</span>
+                            <span id="fatGrams" class="text-2xl font-bold">0g</span>
+                        </div>
+                        <div class="macro-bar">
+                            <div class="macro-fill bg-green-400" id="fatBar" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2 text-sm text-gray-400">
+                            <span id="fatCal">0 calo</span>
+                            <span id="fatPercent">0%</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">0.8-1g/kg cân nặng</div>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div id="tips" class="result-card rounded-2xl p-5 mt-6">
+                    <h4 class="font-semibold mb-3 flex items-center gap-2">
+                        <span>💡</span>
+                        Lời khuyên cho bạn
+                    </h4>
+                    <ul id="tipsList" class="text-gray-300 text-sm space-y-2">
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Meal Timing -->
+            <div class="glass-card rounded-3xl p-6 md:p-10 animate-in">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center gap-3">
+                    <span class="text-3xl">⏰</span>
+                    Gợi ý chia bữa ăn
+                </h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4" id="mealPlan">
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-10 text-gray-500 text-sm">
+            <p>💪 "Everybody wants to be a bodybuilder, but nobody wants to lift heavy weights" - Ronnie Coleman</p>
+            <p class="mt-2">Made for Gymers 🏆</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variables
+        let activityMultiplier = 1.55;
+        let goal = 'maintain';
+
+        // Activity button handlers
+        document.querySelectorAll('.activity-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                activityMultiplier = parseFloat(this.dataset.multiplier);
+            });
+        });
+
+        // Goal button handlers
+        document.querySelectorAll('.goal-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.goal-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                goal = this.dataset.goal;
+            });
+        });
+
+        // Calculate BMR using Mifflin-St Jeor (for males)
+        function calculateBMR(weight, height, age, bodyfat) {
+            if (bodyfat && bodyfat > 0) {
+                // Katch-McArdle Formula (more accurate with body fat)
+                const leanMass = weight * (1 - bodyfat / 100);
+                return 370 + (21.6 * leanMass);
+            } else {
+                // Mifflin-St Jeor for males
+                return (10 * weight) + (6.25 * height) - (5 * age) + 5;
+            }
+        }
+
+        // Calculate TDEE
+        function calculateTDEE(bmr, multiplier) {
+            return bmr * multiplier;
+        }
+
+        // Calculate target calories based on goal
+        function calculateTarget(tdee, goal) {
+            switch(goal) {
+                case 'cut':
+                    return tdee - 500;
+                case 'bulk':
+                    return tdee + 400;
+                default:
+                    return tdee;
+            }
+        }
+
+        // Calculate macros for gymers
+        function calculateMacros(targetCal, weight, goal) {
+            // Protein: 2.2g/kg for gym
+            const proteinG = Math.round(weight * 2.2);
+            const proteinCal = proteinG * 4;
+
+            // Fat: 0.8-1g/kg
+            const fatG = Math.round(weight * (goal === 'cut' ? 0.8 : 1));
+            const fatCal = fatG * 9;
+
+            // Carbs: remaining calories
+            const carbsCal = targetCal - proteinCal - fatCal;
+            const carbsG = Math.round(carbsCal / 4);
+
+            return {
+                protein: { grams: proteinG, calories: proteinCal, percent: Math.round((proteinCal / targetCal) * 100) },
+                carbs: { grams: Math.max(0, carbsG), calories: Math.max(0, carbsCal), percent: Math.round((Math.max(0, carbsCal) / targetCal) * 100) },
+                fat: { grams: fatG, calories: fatCal, percent: Math.round((fatCal / targetCal) * 100) }
+            };
+        }
+
+        // Get tips based on goal
+        function getTips(goal, weight) {
+            const tips = {
+                cut: [
+                    `🥤 Uống ít nhất ${Math.round(weight * 0.04)}L nước mỗi ngày`,
+                    '🥗 Ưu tiên rau xanh để no lâu mà ít calo',
+                    '🏋️ Duy trì cường độ tập để giữ cơ',
+                    '😴 Ngủ đủ 7-8 tiếng để hormone hoạt động tốt',
+                    '📉 Giảm 0.5-1kg/tuần là an toàn'
+                ],
+                maintain: [
+                    `🥤 Uống ít nhất ${Math.round(weight * 0.035)}L nước mỗi ngày`,
+                    '⚖️ Theo dõi cân nặng hàng tuần',
+                    '🔄 Đa dạng thực phẩm để đủ vi chất',
+                    '💪 Tăng dần weights để progressive overload',
+                    '🍳 Chia đều protein trong các bữa ăn'
+                ],
+                bulk: [
+                    `🥤 Uống ít nhất ${Math.round(weight * 0.04)}L nước mỗi ngày`,
+                    '🍚 Ưu tiên carbs phức hợp (gạo, yến mạch)',
+                    '💪 Focus compound exercises (squat, deadlift, bench)',
+                    '📈 Tăng 0.25-0.5kg/tuần là lý tưởng',
+                    '🥜 Thêm các nguồn calo healthy (bơ, nuts, dầu olive)'
+                ]
+            };
+            return tips[goal];
+        }
+
+        // Generate meal plan
+        function generateMealPlan(targetCal, macros) {
+            const meals = [
+                { name: 'Bữa sáng', icon: '🌅', percent: 0.25 },
+                { name: 'Bữa trưa', icon: '☀️', percent: 0.30 },
+                { name: 'Pre-workout', icon: '💪', percent: 0.15 },
+                { name: 'Bữa tối', icon: '🌙', percent: 0.30 }
+            ];
+
+            return meals.map(meal => ({
+                ...meal,
+                calories: Math.round(targetCal * meal.percent),
+                protein: Math.round(macros.protein.grams * meal.percent),
+                carbs: Math.round(macros.carbs.grams * meal.percent),
+                fat: Math.round(macros.fat.grams * meal.percent)
+            }));
+        }
+
+        // Main calculate function
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            const age = parseInt(document.getElementById('age').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const bodyfat = parseFloat(document.getElementById('bodyfat').value) || 0;
+
+            if (!age || !weight || !height) {
+                alert('Vui lòng nhập đầy đủ thông tin (tuổi, cân nặng, chiều cao)');
+                return;
+            }
+
+            // Calculate
+            const bmr = Math.round(calculateBMR(weight, height, age, bodyfat));
+            const tdee = Math.round(calculateTDEE(bmr, activityMultiplier));
+            const target = Math.round(calculateTarget(tdee, goal));
+            const macros = calculateMacros(target, weight, goal);
+
+            // Display results
+            document.getElementById('results').classList.remove('hidden');
+            
+            // Animate numbers
+            animateValue('bmrResult', 0, bmr, 1000);
+            animateValue('tdeeResult', 0, tdee, 1000);
+            animateValue('targetResult', 0, target, 1000);
+
+            // Update macros
+            setTimeout(() => {
+                document.getElementById('proteinGrams').textContent = macros.protein.grams + 'g';
+                document.getElementById('proteinCal').textContent = macros.protein.calories + ' calo';
+                document.getElementById('proteinPercent').textContent = macros.protein.percent + '%';
+                document.getElementById('proteinBar').style.width = macros.protein.percent + '%';
+
+                document.getElementById('carbsGrams').textContent = macros.carbs.grams + 'g';
+                document.getElementById('carbsCal').textContent = macros.carbs.calories + ' calo';
+                document.getElementById('carbsPercent').textContent = macros.carbs.percent + '%';
+                document.getElementById('carbsBar').style.width = macros.carbs.percent + '%';
+
+                document.getElementById('fatGrams').textContent = macros.fat.grams + 'g';
+                document.getElementById('fatCal').textContent = macros.fat.calories + ' calo';
+                document.getElementById('fatPercent').textContent = macros.fat.percent + '%';
+                document.getElementById('fatBar').style.width = macros.fat.percent + '%';
+            }, 500);
+
+            // Update tips
+            const tips = getTips(goal, weight);
+            const tipsList = document.getElementById('tipsList');
+            tipsList.innerHTML = tips.map(tip => `<li>• ${tip}</li>`).join('');
+
+            // Update meal plan
+            const mealPlan = generateMealPlan(target, macros);
+            const mealContainer = document.getElementById('mealPlan');
+            mealContainer.innerHTML = mealPlan.map(meal => `
+                <div class="result-card rounded-xl p-4">
+                    <div class="text-2xl mb-2">${meal.icon}</div>
+                    <div class="font-semibold">${meal.name}</div>
+                    <div class="text-2xl font-bold text-white my-2">${meal.calories} cal</div>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <div>P: ${meal.protein}g | C: ${meal.carbs}g | F: ${meal.fat}g</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // Animate number counting
+        function animateValue(id, start, end, duration) {
+            const element = document.getElementById(id);
+            const range = end - start;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + range * easeProgress);
+                element.textContent = current.toLocaleString();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+    </script>
+</body>
+</html>
